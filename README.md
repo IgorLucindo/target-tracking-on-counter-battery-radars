@@ -7,4 +7,5 @@ https://www.mathworks.com/products/matlab/student.html
 
 # Execution
 Now for running the application, open the folder ``application`` and execute the file ``main.m`` to get the results in the folder ``application\weights``.
+
 For ploting the results, execute the file ``plotGraph.m``.
