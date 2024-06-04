@@ -10,4 +10,4 @@ Now for executing the script, open the folder ``\application\`` and run the file
 
 For ploting the results, execute the file ``plotGraphs.m``.
 
-If you wish to plot our current results, just drag the files in the directory ``\application\weights\`` to ``\application\weights\`` and execute the file ``plotGraphs.m``.
+If you wish to plot our current results, just drag the files in the directory ``\application\our_weights\`` to ``\application\weights\`` and execute the file ``plotGraphs.m``.
