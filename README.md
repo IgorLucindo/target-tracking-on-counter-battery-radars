@@ -1,5 +1,5 @@
 # Target-Tracking-on-Counter-Battery-Radars
-Kalman Filter approach to target tracking on counter battery radars, and predictions to impact and shooting points.
+Kalman Filter approach to target tracking on counter-battery radars, and predictions for impact and shooting points.
 
 # Setup
 It is only needed to have Matlab installed. To install it, follow the link down bellow:
