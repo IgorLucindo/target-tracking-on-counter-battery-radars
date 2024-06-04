@@ -6,6 +6,6 @@ It is only needed to have Matlab installed. To install it, follow the link down 
 https://www.mathworks.com/products/matlab/student.html
 
 # Execution
-Now for running the application, open the folder ``application`` and execute the file ``main.m`` to get the results in the folder ``application\weights``.
+Now for executing the script, open the folder ``\application\`` and run the file ``main.m`` to get the results in the folder ``\application\weights``. Keep in mind that you can always interrupt the application and resume it again.
 
 For ploting the results, execute the file ``plotGraph.m``.
