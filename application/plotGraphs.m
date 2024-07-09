@@ -1,32 +1,39 @@
 clear; close all; clc;
 
-addpath('utils');
-addpath('utils\plot');
+addpath(genpath('utils'));
 
-% intervalo de tempo de previsao
-predTime = [1 5];
+% carregar weights
+data = load('weights\weights.mat');
 
-Ts_1ms = 0.001;
-Ts_10ms = 0.01;
-% carregar erros anteriores em weights
-arrayLength = ceil(predTime(2)/Ts_10ms);
-errArraySizeP = [3 5 arrayLength];
-weights_path = 'weights\weights_comparingP.mat';
-[impErrAvgArrayP, shoErrAvgArrayP, ~] = loadWeights(weights_path,errArraySizeP);
+% medias de erros
+errPSize = size(data.impErrP_array{1});
+errTsSize = size(data.impErrTs_array{1});
+[impErrPAvg, shoErrPAvg] = errAverage(data.impErrP_array, data.shoErrP_array, errPSize);
+[impErrTsAvg, shoErrTsAvg] = errAverage(data.impErrTs_array, data.shoErrTs_array, errTsSize);
 
-arrayLength = ceil(predTime(2)/Ts_1ms);
-errArraySizeTs = [3 7 arrayLength];
-weights_path = 'weights\weights_comparingTs.mat';
-[impErrAvgArrayTs, shoErrAvgArrayTs, ~] = loadWeights(weights_path, errArraySizeTs);
-
-impErrAvgArrayMethod = permute(impErrAvgArrayTs, [2, 1, 3]);
-shoErrAvgArrayMethod = permute(shoErrAvgArrayTs, [2, 1, 3]);
-
+% [impErrAvgArrayP, shoErrAvgArrayP, ~] = loadWeights('weights\weights_comparingP.mat');
+% [impErrAvgArrayTs, shoErrAvgArrayTs, ~] = loadWeights('weights\weights_comparingTs.mat');
+% impErrAvgArrayMethod = permute(impErrAvgArrayTs, [2, 1, 3]);
+% shoErrAvgArrayMethod = permute(shoErrAvgArrayTs, [2, 1, 3]);
 
 % tempo
-t = (1:arrayLength)*Ts_1ms;
-t_1ms = t;
-t_10ms = t(10:10:end);
+predTime = data.predTime;
+Ts_ref = data.Ts_ref;
+
+t_10ms = 0.01 * (1:ceil((predTime(2) - predTime(1))/0.01)) + 1;
+tP_cell = cell(errPSize(2), 1);
+for i = 1:errPSize(2)
+    tP_cell{i} = t_10ms;
+end
+
+tTs_cell = cell(errTsSize(2), 1);
+for i = 1:errTsSize(2)
+    tTs_cell{i} = Ts_ref * i * (1:ceil((predTime(2) - predTime(1))/(Ts_ref*i))) + 1;
+end
+
+% labels
+labelsP = data.labelsP;
+labelsTs = data.labelsTs;
 
 
 % fullPlot(y, y_true, y_est);
@@ -34,52 +41,50 @@ t_10ms = t(10:10:end);
 
 
 % comparando P
-plotTitle = ["Erro de Impacto - Metodo 1 e Ts = 10ms";
-             "Erro de Impacto - Metodo 2 e Ts = 10ms";
-             "Erro de Impacto - Metodo 3 e Ts = 10ms"];
-plotLegend = ["P = 1e1" "P = 1e2" "P = 1e4" "P = 1e6" "P = 1e8"];
-errorPlot(t_10ms, impErrAvgArrayP, plotTitle, plotLegend, 120);
-plotTitle = ["Erro de Disparo - Metodo 1 e Ts = 10ms";
-             "Erro de Disparo - Metodo 2 e Ts = 10ms";
-             "Erro de Disparo - Metodo 3 e Ts = 10ms"];
-plotLegend = ["P = 1e1" "P = 1e2" "P = 1e4" "P = 1e6" "P = 1e8"];
-errorPlot(t_10ms, shoErrAvgArrayP, plotTitle, plotLegend, 80);
+for i = 1:errPSize(1)
+    plotTitleImp(i) = "Erro de Impacto - " + labelsP.method(i) + " e " + labelsP.Ts;
+    plotTitleSho(i) = "Erro de Disparo - " + labelsP.method(i) + " e " + labelsP.Ts;
+end
+for i = 1:errPSize(2)
+    plotLegend(i) = labelsP.P(i);
+end
+errorPlot(tP_cell, impErrPAvg, plotTitleImp, plotLegend, predTime, 120);
+errorPlot(tP_cell, shoErrPAvg, plotTitleSho, plotLegend, predTime, 80);
  
 
 % comparando Ts
-plotTitle = ["Erro de Impacto - Metodo 1";
-             "Erro de Impacto - Metodo 2";
-             "Erro de Impacto - Metodo 3"];
-plotLegend = ["Ts = 1ms" "Ts = 5ms" "Ts = 10ms" "Ts = 15ms" "Ts = 20ms" "Ts = 25ms" "Ts = 30ms"];
-errorPlot(t_1ms, impErrAvgArrayTs, plotTitle, plotLegend, 120);
-plotTitle = ["Erro de Disparo - Metodo 1";
-             "Erro de Disparo - Metodo 2";
-             "Erro de Disparo - Metodo 3"];
-plotLegend = ["Ts = 1ms" "Ts = 5ms" "Ts = 10ms" "Ts = 15ms" "Ts = 20ms" "Ts = 25ms" "Ts = 30ms"];
-errorPlot(t_1ms, shoErrAvgArrayTs, plotTitle, plotLegend, 80);
+for i = 1:errTsSize(1)
+    plotTitleImp(i) = "Erro de Impacto - " + labelsTs.method(i);
+    plotTitleSho(i) = "Erro de Disparo - " + labelsTs.method(i);
+end
+for i = 1:errTsSize(2)
+    plotLegend(i) = labelsTs.Ts(i);
+end
+errorPlot(tTs_cell, impErrTsAvg, plotTitleImp, plotLegend, predTime, 120);
+errorPlot(tTs_cell, shoErrTsAvg, plotTitleSho, plotLegend, predTime, 80);
 
 
 
 % comparando cada metodo
-plotTitle = ["Erro de Impacto - Ts = 1ms";
-             "Erro de Impacto - Ts = 5ms";
-             "Erro de Impacto - Ts = 10ms"];
-plotLegend = ["Metodo 1" "Metodo 2" "Metodo 3"];
-errorPlot(t_1ms, impErrAvgArrayMethod(1:3, :, :), plotTitle, plotLegend, 120);
-plotTitle = ["Erro de Impacto - Ts = 15ms";
-             "Erro de Impacto - Ts = 20ms";
-             "Erro de Impacto - Ts = 25ms";
-             "Erro de Impacto - Ts = 30ms"];
-plotLegend = ["Metodo 1" "Metodo 2" "Metodo 3"];
-errorPlot(t_1ms, impErrAvgArrayMethod(4:7, :, :), plotTitle, plotLegend, 120);
-plotTitle = ["Erro de Disparo - Ts = 1ms";
-             "Erro de Disparo - Ts = 5ms";
-             "Erro de Disparo - Ts = 10ms"];
-plotLegend = ["Metodo 1" "Metodo 2" "Metodo 3"];
-errorPlot(t_1ms, shoErrAvgArrayMethod(1:3, :, :), plotTitle, plotLegend, 80);
-plotTitle = ["Erro de Disparo - Ts = 15ms";
-             "Erro de Disparo - Ts = 20ms";
-             "Erro de Disparo - Ts = 25ms";
-             "Erro de Disparo - Ts = 30ms"];
-plotLegend = ["Metodo 1" "Metodo 2" "Metodo 3"];
-errorPlot(t_1ms, shoErrAvgArrayMethod(4:7, :, :), plotTitle, plotLegend, 80);
+% plotTitle = ["Erro de Impacto - Ts = 1ms";
+%              "Erro de Impacto - Ts = 5ms";
+%              "Erro de Impacto - Ts = 10ms"];
+% plotLegend = ["Metodo 1" "Metodo 2" "Metodo 3"];
+% errorPlot(t_1ms, impErrAvgArrayMethod(1:3, :, :), plotTitle, plotLegend, 120);
+% plotTitle = ["Erro de Impacto - Ts = 15ms";
+%              "Erro de Impacto - Ts = 20ms";
+%              "Erro de Impacto - Ts = 25ms";
+%              "Erro de Impacto - Ts = 30ms"];
+% plotLegend = ["Metodo 1" "Metodo 2" "Metodo 3"];
+% errorPlot(t_1ms, impErrAvgArrayMethod(4:7, :, :), plotTitle, plotLegend, 120);
+% plotTitle = ["Erro de Disparo - Ts = 1ms";
+%              "Erro de Disparo - Ts = 5ms";
+%              "Erro de Disparo - Ts = 10ms"];
+% plotLegend = ["Metodo 1" "Metodo 2" "Metodo 3"];
+% errorPlot(t_1ms, shoErrAvgArrayMethod(1:3, :, :), plotTitle, plotLegend, 80);
+% plotTitle = ["Erro de Disparo - Ts = 15ms";
+%              "Erro de Disparo - Ts = 20ms";
+%              "Erro de Disparo - Ts = 25ms";
+%              "Erro de Disparo - Ts = 30ms"];
+% plotLegend = ["Metodo 1" "Metodo 2" "Metodo 3"];
+% errorPlot(t_1ms, shoErrAvgArrayMethod(4:7, :, :), plotTitle, plotLegend, 80);

@@ -1,14 +1,14 @@
 % previsao do ponto de impacto e disparo
-function [impPtPred, shoPtPred] = setImpactShootingPoint(x_est, g, pos_floor)
-    pos0x = x_est(1); pos0y = x_est(2); pos0z = x_est(3);
-    vel0x = x_est(4); vel0y = x_est(5); vel0z = x_est(6);
+function [impPtPred, shoPtPred] = setImpactShootingPoint(x_est, g, p_floor)
+    p0x = x_est(1); p0y = x_est(2); p0z = x_est(3);
+    v0x = x_est(4); v0y = x_est(5); v0z = x_est(6);
 
-    ti = (vel0z + sqrt(vel0z^2 + 2*g*(pos0z - pos_floor)))/g;
-    td = (vel0z - sqrt(vel0z^2 + 2*g*(pos0z - pos_floor)))/g;
+    ti = (v0z + sqrt(v0z^2 + 2*g*(p0z - p_floor)))/g;
+    td = (v0z - sqrt(v0z^2 + 2*g*(p0z - p_floor)))/g;
 
-    pos1x = pos0x + vel0x*ti; pos2x = pos0x + vel0x*td;
-    pos1y = pos0y + vel0y*ti; pos2y = pos0y + vel0y*td;
+    p1x = p0x + v0x*ti; p2x = p0x + v0x*td;
+    p1y = p0y + v0y*ti; p2y = p0y + v0y*td;
 
-    impPtPred = [pos1x; pos1y; pos_floor];
-    shoPtPred = [pos2x; pos2y; pos_floor];
+    impPtPred = [p1x; p1y; p_floor];
+    shoPtPred = [p2x; p2y; p_floor];
 end

@@ -1,15 +1,5 @@
 % rodar simulacao
-function [y, y_est, impErr, shoErr] = runSim(Ts_base, Ts, method, P, v, y_true, g, u, impPt, shoPt, pos_floor, predTime, Q, R)
-    % trocar escala base das variaveis
-    if Ts ~= Ts_base
-        rescale = Ts/Ts_base;
-        y_true = y_true(:, rescale:rescale:end);
-        v = v(:, rescale:rescale:end);
-    end
-
-    % amostra em que comeca a medida referente ao tempo de 10 segundos
-    detectionThreshold = ceil(10/Ts);
-    
+function [y_est, impErr, shoErr] = runSim(Ts, method, P, y, g, u, impPt, shoPt, p_floor, predTime, Q, R)
     % matrizes de espaco de estados
     A = eye(6);
     A(1:3, 4:end) = Ts*eye(3);
@@ -27,11 +17,11 @@ function [y, y_est, impErr, shoErr] = runSim(Ts_base, Ts, method, P, v, y_true, 
     x_est = zeros(length(A), arrayLength);
     
     ySize = [size(C, 1), arrayLength];
-    % saida medida
-    y = zeros(ySize);
     % saida estimada
     y_est = zeros(ySize);
-    
+
+    arrayLength = ceil((predTime(2) - predTime(1))/Ts);
+    % erros
     impErr = zeros(1, arrayLength);
     shoErr = zeros(1, arrayLength);
     
@@ -40,14 +30,18 @@ function [y, y_est, impErr, shoErr] = runSim(Ts_base, Ts, method, P, v, y_true, 
     
     
     i = 0;
+    j = 0;
     % loop
     while 1
         i = i + 1;
         currentTime = i*Ts;
-    
-        % radar
-        y(:, i) = y_true(:, i+detectionThreshold) + v(:, i);
-    
+
+        % parar quando tempo de execucao estiver fora do intervalo de predTime
+        if currentTime > predTime(2)
+            y_est = y_est(:, 1:i-1);
+            break
+        end
+
         % kalman filter
         % primeira iteracao defini estado inicial de kalman filter
         if i == 1
@@ -68,26 +62,14 @@ function [y, y_est, impErr, shoErr] = runSim(Ts_base, Ts, method, P, v, y_true, 
                 [kf, kf_rev, y_est, x_est] = runMultiKf(numOfFiltering, y_est, x_est, y, u, kf, kf_rev, i);
         end
 
-        % previsao da trajetoria de impacto e disparo no intervalo de predTime
+        % previsao da trasdajetoria de impacto e disparo no intervalo de predTime
         if currentTime > predTime(1) && currentTime <= predTime(2)
-            [impPtPred, shoPtPred] = setImpactShootingPoint(x_est(:, i), g, pos_floor);
-            impPtPredArray(:, i) = impPtPred;
-            shoPtPredArray(:, i) = shoPtPred;
+            j = j + 1;
+            [impPtPred, shoPtPred] = setImpactShootingPoint(x_est(:, i), g, p_floor);
+            impPtPredArray(:, j) = impPtPred;
+            shoPtPredArray(:, j) = shoPtPred;
             % calcular erro dos pontos de impacto e de disparo
-            [impErr(i), shoErr(i)] = getImpactShootingError(impPtPred, shoPtPred, impPt, shoPt);
-        % parar quando tempo de execucao estiver fora do intervalo de predTime
-        elseif currentTime > predTime(2)
-            y = y(:, 1:i);
-            y_est = y_est(:, 1:i);
-            break
+            [impErr(j), shoErr(j)] = getImpactShootingError(impPtPred, shoPtPred, impPt, shoPt);
         end
-    end
-
-    % colocar erros para escala base
-    if Ts ~= Ts_base
-        newLength = ceil(predTime(2)/Ts_base);
-        oldLength = length(impErr);
-        impErr = interp1(linspace(1, oldLength, oldLength), impErr, linspace(1, oldLength, newLength), 'linear');
-        shoErr = interp1(linspace(1, oldLength, oldLength), shoErr, linspace(1, oldLength, newLength), 'linear');
     end
 end

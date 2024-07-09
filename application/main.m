@@ -1,21 +1,23 @@
 clear; close all; clc;
 
 addpath('classes');
-addpath('utils');
-addpath('utils\prediction');
-addpath('utils\simulation');
+addpath(genpath('utils'));
 
-% variaveis para simulacao
-numOfSim = 50;
-% fixar P ou Ts
-fixedVariable = 'P';
+% comparar P ou Ts
+% COMPARE = 'P';
+COMPARE = 'Ts';
+% numero de simulacoes
+numOfSim = 2;
+% ao mudar esses valores, delete o arquivo weights.mat
+numOfP = 4;
+numOfTs = 4;
 
 
 % variaveis de mruv
 g = 9.81;
-vel0 = [180 180 250]; a = [0 0 -g];
+v0 = [180 180 250]; a = [0 0 -g];
 % chao
-pos_floor = 0;
+p_floor = 0;
 % intervalo de tempo de previsao
 predTime = [1 5];
 
@@ -24,56 +26,64 @@ u = a';
 % matriz covariancia do ruido de processo
 Q = cov(u');
 % matriz covariancia do ruido de medicao
-sigma2_v = [1e2; 1e2; 1e2];
-R = [sigma2_v(1) 0 0;     % roubo
-     0 sigma2_v(2) 0;
-     0 0 sigma2_v(3)];
+sigma2_n = [1e2; 1e2; 1e2];
+R = [sigma2_n(1) 0 0;     % roubo
+     0 sigma2_n(2) 0;
+     0 0 sigma2_n(3)];
 R = 0.1*R;                % R chutado para 10 vezes menor
 % quero testar R obtido por autocovariance least-square
 
-Ts_1ms = 0.001;
+% periodo de amostragem
+Ts_ref = 0.005;
+Ts_array = Ts_ref * (1:numOfTs);
 Ts_10ms = 0.01;
-% carregar erros anteriores salvos em weights
-switch fixedVariable
-    case 'Ts'
-        arrayLength = ceil(predTime(2)/Ts_10ms);
-        errArraySize = [3 5 arrayLength];
-        weights_path = 'weights\weights_comparingP.mat';
-    case 'P'
-        arrayLength = ceil(predTime(2)/Ts_1ms);
-        errArraySize = [3 7 arrayLength];
-        weights_path = 'weights\weights_comparingTs.mat';
-end
-[impErrAvgArray, shoErrAvgArray, numOfSimTotal] = loadWeights(weights_path, errArraySize);
-
-
 
 % definir saida real
-[y_true, impPt, shoPt] = setYTrue(Ts_1ms, vel0, g, u, pos_floor);
-y_true_10ms = y_true(:, 10:10:end);
+[y_true, impPt, shoPt] = setYTrue(Ts_ref, v0, g, u, p_floor);
 
+% array de diferentes P
+P_array = zeros(6, 6, numOfP);
+for i = 1:numOfP
+    P_array(:, :, i) = 10^(2*i-1) * eye(6);
+end
 
+% criar weights caso nao exista e definir labels
+if exist('weights\weights.mat', 'file') == 0
+    createWeights(Ts_array, Ts_10ms, P_array, predTime);
+end
+
+% carregar weights
+data = load('weights\weights.mat');
+
+% numero de simulacoes anteriores
+numOfPrevSim = data.(['numOfSim' COMPARE]);
 
 % simulacao
 for i = 1:numOfSim
     tic;
-    fprintf("\nrodando simulacao: " + i + "/" + numOfSim + "\n");
+    fprintf("\nrodando simulacao: " + (numOfPrevSim+i) + "/" + (numOfPrevSim+numOfSim) + "\n");
     
+    % radar
     % ruido de medicao
-    v = generateNoise(sigma2_v, predTime(2), Ts_1ms);
-    v_10ms = v(:, 10:10:end);
+    n = generateNoise(sigma2_n, predTime(2), Ts_ref);
+    % amostra em que comeca a medida referente ao tempo de 10 segundos
+    detecThresh = ceil(10/Ts_ref);
+    arrayLength = ceil(predTime(2)/Ts_ref);
+    % medicao
+    y = y_true(:, detecThresh:detecThresh+arrayLength) + n(:, 1:1+arrayLength);
 
-    switch fixedVariable
-        case 'Ts'
-            [impErrArray, shoErrArray] = runSimFixedTs(Ts_10ms, v_10ms, y_true_10ms, g, u, impPt, shoPt, pos_floor, predTime, Q, R);
+    rescale_10ms = Ts_10ms/Ts_ref;
+    y_10ms = y(:, rescale_10ms:rescale_10ms:end);
+
+    switch COMPARE
         case 'P'
-            [impErrArray, shoErrArray] = runSimFixedP(v, y_true, g, u, impPt, shoPt, pos_floor, predTime, Q, R);
+            [data.impErrP_array{end + 1}, data.shoErrP_array{end + 1}] = runSimP(Ts_10ms, P_array, y_10ms, g, u, impPt, shoPt, p_floor, predTime, Q, R);
+        case 'Ts'
+            [data.impErrTs_array{end + 1}, data.shoErrTs_array{end + 1}] = runSimTs(Ts_array, y, g, u, impPt, shoPt, p_floor, predTime, Q, R);
     end
-
-    % atualiza media dos erros e salva em weights
-    impErrAvgArray = (impErrAvgArray*(numOfSimTotal-1) + impErrArray)/numOfSimTotal;
-    shoErrAvgArray = (shoErrAvgArray*(numOfSimTotal-1) + shoErrArray)/numOfSimTotal;
-    numOfSimTotal = numOfSimTotal + 1;
-    save(weights_path, 'impErrAvgArray', 'shoErrAvgArray', 'numOfSimTotal');
-    toc
+    data.(['numOfSim' COMPARE]) = numOfPrevSim + i;
+    
+    % salva erros em weights
+    save('weights\weights.mat', '-struct', 'data');
+    toc;
 end

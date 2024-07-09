@@ -6,8 +6,8 @@ It is only needed to have Matlab installed. To install it, follow the link down 
 https://www.mathworks.com/products/matlab/student.html
 
 # Execution
-Now for executing the script, open the folder ``\application\`` and run the file ``main.m`` to get the results in the directory ``\application\weights\``. Keep in mind that you can always interrupt the application and resume it again.
+Now for executing the script, open the ``\application\`` folder and run the ``main.m`` file to get the results in the ``\application\weights\`` directory. Keep in mind that you can always interrupt the application and resume it again.
 
-For ploting the results, execute the file ``plotGraphs.m``.
+For ploting the results, execute the ``plotGraphs.m`` file.
 
-If you wish to plot our current results instead, just drag the files in the directory ``\application\our_weights\`` to ``\application\weights\`` and execute the file ``plotGraphs.m``.
+If you wish to plot our current results instead, just drag the ``weigths.mat`` file in ``\application\our_weights\`` to ``\application\weights\`` and execute the ``plotGraphs.m`` file.
