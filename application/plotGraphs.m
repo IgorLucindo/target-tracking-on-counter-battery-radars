@@ -8,8 +8,8 @@ data = load('weights\weights.mat');
 % medias de erros
 errPSize = size(data.impErrP_array{1});
 errTsSize = size(data.impErrTs_array{1});
-[impErrPAvg, shoErrPAvg] = errAverage(data.impErrP_array, data.shoErrP_array, errPSize);
-[impErrTsAvg, shoErrTsAvg] = errAverage(data.impErrTs_array, data.shoErrTs_array, errTsSize);
+[impErrPAvg, shoErrPAvg] = calculateErrorAverage(data.impErrP_array, data.shoErrP_array, errPSize);
+[impErrTsAvg, shoErrTsAvg] = calculateErrorAverage(data.impErrTs_array, data.shoErrTs_array, errTsSize);
 
 % [impErrAvgArrayP, shoErrAvgArrayP, ~] = loadWeights('weights\weights_comparingP.mat');
 % [impErrAvgArrayTs, shoErrAvgArrayTs, ~] = loadWeights('weights\weights_comparingTs.mat');

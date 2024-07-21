@@ -1,29 +1,24 @@
-clc;
+clear; clc; close all;
 
-% Define the cell array
-C = { [1 2 3] [3 6 9]};
+addpath('classes');
+addpath(genpath('utils'));
 
-% Calculate the average of all cell elements
-avgElement = cellArrayAverage(C);
-disp('The average of all cell elements is:');
-disp(avgElement);
+[y, impPt, shoPt, Ts_rad] = getRadarTrajectory("radarData/81mm1.xlsx");
 
-function avg = cellArrayAverage(C)
-    % Initialize the sum array with zeros of the same size as the first element
-    sumArray = zeros(size(C{1}));
-    
-    % Initialize counter
-    numElements = numel(C);
-    
-    % Loop through each cell and sum the elements
-    for i = 1:numElements
-        if isnumeric(C{i}) && isequal(size(C{i}), size(sumArray))
-            sumArray = sumArray + C{i};
-        else
-            error('All elements must be numeric arrays of the same size.');
-        end
-    end
-    
-    % Calculate the average
-    avg = sumArray / numElements;
-end
+method = 1;
+P = 1e8*eye(6);
+g = 9.81;
+u = [0; 0; -g];
+p_floor = 0;
+predTime = [1 5];
+Q = cov(u');
+sigma2_n = [1e2; 1e2; 1e2];
+R = [sigma2_n(1) 0 0;
+     0 sigma2_n(2) 0;
+     0 0 sigma2_n(3)];
+[~, impPterr, shoErr] = runSim(Ts_rad, method, P, y, g, u, impPt, shoPt, p_floor, predTime, Q, R);
+
+plot3(y(1, :), y(2, :), y(3, :), 'k.')
+hold on
+plot3(shoPt(1), shoPt(2), shoPt(3), 'g*')
+grid on

@@ -6,30 +6,36 @@ function createWeights(Ts_array, Ts_P, P_array, predTime)
     numOfP = size(P_array, 3);
     numOfTs = length(Ts_array);
 
-    labelsP.Ts = Ts_P/0.001 + "ms";
-    labelsP.method = strings(numOfMethods);
-    labelsP.P = strings(numOfP);
+    data.labelsP.Ts = Ts_P/0.001 + "ms";
+    data.labelsP.method = strings(numOfMethods);
+    data.labelsP.P = strings(numOfP);
 
-    labelsTs.Ts = strings(numOfTs);
-    labelsTs.method = strings(numOfMethods);
+    data.labelsTs.Ts = strings(numOfTs);
+    data.labelsTs.method = strings(numOfMethods);
 
-    impErrP_array = {}; shoErrP_array = {};
-    impErrTs_array = {}; shoErrTs_array = {};
+    data.impErrP_array = {}; data.shoErrP_array = {};
+    data.impErrTs_array = {}; data.shoErrTs_array = {};
+    data.impErrTsi_array = {}; data.shoErrTsi_array = {};
+    data.impErrRad_array = {}; data.shoErrRad_array = {};
 
-    numOfSimP = 0; numOfSimTs = 0;
+    data.numOfSimP = 0;
+    data.numOfSimTs = 0;
+    data.numOfSimTsi = 0;
+    data.numOfSimRad = 0;
 
     for i = 1:numOfMethods
-        labelsP.method(i) = "metodo " + method(i);
-        labelsTs.method(i) = "metodo " + method(i);
+        data.labelsP.method(i) = "metodo " + method(i);
+        data.labelsTs.method(i) = "metodo " + method(i);
     end
     for i = 1:numOfP
-        labelsP.P(i) = "P = 1e" + log10(P_array(1, 1, i)) + " I_{6}";
+        data.labelsP.P(i) = "P = 1e" + log10(P_array(1, 1, i)) + " I_{6}";
     end
     for i = 1:numOfTs
-        labelsTs.Ts(i) = Ts_array(i)/0.001 + "ms";
+        data.labelsTs.Ts(i) = Ts_array(i)/0.001 + "ms";
     end
 
-    Ts_ref = Ts_array(1);
+    data.Ts_ref = Ts_array(1);
+    data.predTime = predTime;
 
-    save('weights\weights.mat', 'impErrP_array', 'impErrTs_array', 'shoErrP_array', 'shoErrTs_array', 'labelsP', 'labelsTs', 'numOfSimP', 'numOfSimTs', 'Ts_ref', 'predTime');
+    save('weights\weights.mat', '-struct', 'data');
 end

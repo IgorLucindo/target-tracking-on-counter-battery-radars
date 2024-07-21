@@ -27,8 +27,7 @@ function [y_est, impErr, shoErr] = runSim(Ts, method, P, y, g, u, impPt, shoPt, 
     
     impPtPredArray = zeros(ySize);
     shoPtPredArray = zeros(ySize);
-    
-    
+
     i = 0;
     j = 0;
     % loop
@@ -38,8 +37,8 @@ function [y_est, impErr, shoErr] = runSim(Ts, method, P, y, g, u, impPt, shoPt, 
 
         % parar quando tempo de execucao estiver fora do intervalo de predTime
         if currentTime > predTime(2)
-            y_est = y_est(:, 1:i-1);
-            break
+            y_est = y_est(:, 1:i - 1);
+            return
         end
 
         % kalman filter
