@@ -5,7 +5,7 @@ function errorPlot(t_cell, errArray, plotTitle, plotLegend, xLim, yLim_max)
         hold on
         for j = 1:size(errArray, 2)
             error = reshape(errArray{i, j}, 1, []);
-            plot(t_cell{j}, error, 'LineWidth', 2)
+            plot(t_cell{j, i}, error, 'LineWidth', 2)
         end
         title(plotTitle(i))
         xlim(xLim)
@@ -14,5 +14,5 @@ function errorPlot(t_cell, errArray, plotTitle, plotLegend, xLim, yLim_max)
         legend(plotLegend, 'ItemHitFcn', @cb_legend)
         grid on
     end
-    set(gcf, 'Units', 'normalized', 'OuterPosition', [0 0 1 1], 'Color', [1 1 1]);
+    set(gcf, 'Units', 'normalized', 'OuterPosition', [0 0 1 1], 'Color', [1 1 1])
 end

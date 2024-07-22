@@ -1,9 +1,9 @@
 clear; close all; clc;
 
-addpath(genpath('utils'));
+addpath(genpath('..\utils'));
 
 % carregar weights
-data = load('weights\weights.mat');
+data = load('..\weights\weightsRad.mat');
 
 % medias de erros
 errRadSize = size(data.impErrRad_array{1});
@@ -18,9 +18,12 @@ predTime = data.predTime;
 Ts_rad = 0.05;
 t_rad = Ts_rad * (1:ceil((predTime(2) - predTime(1))/Ts_rad)) + 1;
 
-tTs_cell = cell(errRadSize(2), 1);
+tTs_cell = cell(errRadSize)';
 for i = 1:errRadSize(2)
-    tTs_cell{i} = t_rad;
+    tTs_cell{i, 1} = t_rad;
+end
+for i = 2:errRadSize(1)
+    tTs_cell(:, i) = tTs_cell(:, 1);
 end
 
 % labels

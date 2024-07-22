@@ -1,9 +1,9 @@
 clear; close all; clc;
 
-addpath(genpath('utils'));
+addpath(genpath('..\utils'));
 
 % carregar weights
-data = load('weights\weights.mat');
+data = load('..\weights\weights10s.mat');
 
 % medias de erros
 errPSize = size(data.impErrP_array{1});
@@ -21,14 +21,20 @@ predTime = data.predTime;
 Ts_ref = data.Ts_ref;
 
 t_10ms = 0.01 * (1:ceil((predTime(2) - predTime(1))/0.01)) + 1;
-tP_cell = cell(errPSize(2), 1);
+tP_cell = cell(errPSize)';
 for i = 1:errPSize(2)
-    tP_cell{i} = t_10ms;
+    tP_cell{i, 1} = t_10ms;
+end
+for i = 2:errPSize(1)
+    tP_cell(:, i) = tP_cell(:, 1);
 end
 
-tTs_cell = cell(errTsSize(2), 1);
+tTs_cell = cell(errTsSize)';
 for i = 1:errTsSize(2)
-    tTs_cell{i} = Ts_ref * i * (1:ceil((predTime(2) - predTime(1))/(Ts_ref*i))) + 1;
+    tTs_cell{i, 1} = Ts_ref * i * (1:ceil((predTime(2) - predTime(1))/(Ts_ref*i))) + 1;
+end
+for i = 2:errTsSize(1)
+    tTs_cell(:, i) = tTs_cell(:, 1);
 end
 
 % labels
