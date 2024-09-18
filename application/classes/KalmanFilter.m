@@ -26,7 +26,7 @@ classdef KalmanFilter
         % prever
         function obj = predict(obj, u)
             obj.x = obj.A*obj.x + obj.B*u;
-            obj.P = obj.A*obj.P*obj.A' + obj.B*obj.Q*obj.B';
+            obj.P = obj.A*obj.P*obj.A' + obj.Q;
         end
 
 
@@ -43,10 +43,10 @@ classdef KalmanFilter
 
 
         % definir estado inicial
-        function [obj, y_est, x_est] = setX0(obj, y)
-            obj.x = [y; 0; 0; 200];
-            y_est = y;
-            x_est = obj.x;
+        function [obj, y_est, x_est] = setInitialState(obj, x0)
+            obj.x = x0;
+            y_est = x0(1:3);
+            x_est = x0;
         end
 
 

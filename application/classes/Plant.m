@@ -1,6 +1,6 @@
 classdef Plant
     properties
-        A; B; C;
+        f; h;
         x;
     end
     
@@ -8,25 +8,23 @@ classdef Plant
 
     methods
         % construtor
-        function obj = Plant(A, B, C, x0)
+        function obj = Plant(f, h, x)
             if nargin > 0
-                obj.A = A;
-                obj.B = B;
-                obj.C = C;
-                obj.x = x0;
+                obj.f = f;
+                obj.h = h;
+                obj.x = x;
             end
         end
 
 
         % rodar iteracao
         function [obj, y_true] = run(obj, u)
-            y_true = obj.C*obj.x;
-            obj.x = obj.A*obj.x + obj.B*u;
+            y_true = obj.h(obj.x, u);
+            obj.x = obj.f(obj.x, u);
         end
 
-
         % definir estado inicial
-        function obj = setX0(obj, x)
+        function obj = setInitialState(obj, x)
             obj.x = x;
         end
     end
