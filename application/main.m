@@ -13,6 +13,9 @@ comparisons = ["models", "P_kf", "P_ekf", "T_kf", "T_ekf", "interp_kf", "interp_
 % 5 - T_ekf       - periodos de amostragem T diferentes para ekf em trajetoria simulada
 % 6 - interp_kf   - kf com e sem interpolacao em trajetoria simulada
 % 7 - interp_ekf  - ekf com e sem interpolacao em trajetoria simulada
+% 8 - rad_kf      - kf em trajetoria real a partir de dados de radares (nao implementado)
+% 9 - rad_ekf     - ekf em trajetoria real a partir de dados de radares (nao implementado)
+
 
 % escolha a comparacao
 compare = comparisons(4);
