@@ -1,14 +1,7 @@
 clear; clc; close all;
 
-% escolher metodo
-% metodo 1 - filtragem direta
-% metodo 2 - filtragem direta e reversa 1 vez
-method = 1;
-% method = 2;
-numOfsim = 1;
-
 % variaveis de modelo
-detecThresh = 0;
+detecThresh = 200;
 T = 0.05;
 predTime = [1 5];
 g = 9.81;
@@ -26,32 +19,34 @@ Q = zeros(7);
 % valores nao otimos
 P = [1e8*eye(3) zeros(3) zeros(3, 1);
      zeros(3) 1e8*eye(3) zeros(3, 1);
-     zeros(1, 3) zeros(1, 3) 0];
+     zeros(1, 3) zeros(1, 3) 1e-10];
 
 % matriz covariancia do ruido de medicao
-sigma2_n = 1e0;
+sigma2_n = 1e2;
 R = sigma2_n*eye(3);   % roubo
 R = 0.1*R;             % R chutado para 10 vezes menor
 
 % model params
-[f_model, ~, ~, ~, f_model_rev, ~] = getParamsEkf(0.05);
+[f_model, ~, ~, ~, f_model_rev, ~] = getParamsEkf(0.1);
 % EKF params
 [f, h, F, H, f_rev, F_rev] = getParamsEkf(T);
 
 % Extended Kalman filter
-ekf = ExtendedKalmanFilter(f, h, F, H, Q, R, P);
-ekf_rev = ExtendedKalmanFilter(f_rev, h, F_rev, H, Q, R, P);
+kf = ExtendedKalmanFilter(f, h, F, H, Q, R, P);
+kf_rev = ExtendedKalmanFilter(f_rev, h, F_rev, H, Q, R, P);
 
 
 % trajetoria real
-x_true = [1e3*ones(1, 3) v0 gama]';
+x_true = [0*ones(1, 3) v0 gama]';
 x_aux = x_true;
 i = 0;
 while 1
     i = i + 1;
     x_aux = f(x_aux, u);
     if i == detecThresh + 1
-        cheating_gama = x_aux(7);
+        x_true_start = x_aux;
+    elseif i == detecThresh + 100
+        x_true_last = x_aux;
     end
     y_true(:, i) = h(x_aux, u);
     if y_true(3, i) < p_floor
@@ -66,124 +61,92 @@ while 1
     end
 end
 
-
 % ponto de impacto e disparo
 impPt = y_true(:, end);
 shoPt = x_aux(1:3);
-impPtPred = zeros(3, 1);
-shoPtPred = zeros(3, 1);
-
 
 arrayLength = length(y_true);
-% ruido de medicao
-n = randn(3, arrayLength);
-n = n - mean(n, 2)*ones(1, arrayLength);
-n = n*sqrt(sigma2_n)./std(n, 0, 2);
 
-% trajetoria medida
-arrayLength = ceil(predTime(2)/T);
-y = y_true(:, detecThresh + 1:detecThresh+arrayLength) + n(:, 1:arrayLength);
+numOfSim = 10;
+for i = 1:numOfSim
+    % ruido de medicao
+    n = randn(3, arrayLength);
+    n = n - mean(n, 2)*ones(1, arrayLength);
+    n = n*sqrt(sigma2_n)./std(n, 0, 2);
 
-arrayLength = ceil((predTime(2))/T);
-% trajetoria estimada
-y_est = zeros(3, arrayLength);
+    % trajetoria medida
+    arrayLength = ceil(predTime(2)/T);
+    y = y_true(:, detecThresh + 1:detecThresh+arrayLength) + n(:, 1:arrayLength);
 
+    % estado estimado inicial
+    x0 = [y(:, 1); 0; 0; 200; 2e-4];
 
-arrayLength = ceil((predTime(2) - predTime(1))/T);
-% erro de impacto e disparo
-impErr = zeros(1, arrayLength);
-shoErr = zeros(1, arrayLength);
-impErrAvg = zeros(1, arrayLength);
-shoErrAvg = zeros(1, arrayLength);
+    % metodo 1
+    method = 1;
+    [impErr1, shoErr1, state_error1] = loop(kf, kf_rev, x0, T, predTime, f_model, f_model_rev, h, method, y, impPt, shoPt, u, p_floor, P, x_true_start, x_true_last);
 
+    % metodo 2
+    method = 2;
+    [impErr2, shoErr2, state_error2] = loop(kf, kf_rev, x0, T, predTime, f_model, f_model_rev, h, method, y, impPt, shoPt, u, p_floor, P, x_true_start, x_true_last);
 
-% simulacoes
-for k = 1:numOfsim
-    % loop
-    x0 = [y(:, 1); 0; 0; 200; cheating_gama];
-    [ekf, y_est(:, 1), x_est] = ekf.setInitialState(x0);
-    % ekf.x = x0;
-    i = 1; j = 0;
-    while 1
-        i = i + 1;
-        currentTime = i*T;
+    % metodo 3
+    method = 3;
+    [impErr3, shoErr3, state_error3] = loop(kf, kf_rev, x0, T, predTime, f_model, f_model_rev, h, method, y, impPt, shoPt, u, p_floor, P, x_true_start, x_true_last);
 
-        % parar quando tempo de execucao estiver fora do intervalo de predTime
-        if currentTime > predTime(2)
-            break
-        end
+    % calcular media de erro
+    if i == 1
+        impErrAvg1 = impErr1; shoErrAvg1 = shoErr1;
+        state_error1_avg = state_error1;
 
-        % extended kalman filter
-        switch method
-            case 1
-                % metodo 1
-                [ekf, y_est(:, i), x_est] = ekf.run(y(:, i), u);
-            case 2
-                % metodo 2
-                numberOfFiltering = 1;
-                [ekf, ekf_rev, y_est, x_est] = runMultiKf(numberOfFiltering, y, u, P, ekf, ekf_rev, i);
+        impErrAvg2 = impErr2; shoErrAvg2 = shoErr2;
+        state_error2_avg = state_error2;
 
-                % parar caso matriz P exploda
-                if isnan(ekf.P(1))
-                    "iteracao: " + i
-                    ekf.P
-                    ekf_rev.P
-                    break
-                end
-        end
+        impErrAvg3 = impErr3; shoErrAvg3 = shoErr3;
+        state_error3_avg = state_error3;
+    else
+        impErrAvg1 = impErrAvg1 + impErr1; shoErrAvg1 = shoErrAvg1 + shoErr1;
+        state_error1_avg = state_error1_avg + state_error1;
 
-        % previsao da trasdajetoria de impacto e disparo no intervalo de predTime
-        if currentTime > predTime(1) && currentTime <= predTime(2)
-            if j == arrayLength
-                continue
-            end
-            j = j + 1;
+        impErrAvg2 = impErrAvg2 + impErr2; shoErrAvg2 = shoErrAvg2 + shoErr2;
+        state_error2_avg = state_error2_avg + state_error2;
 
-            % prever ponto de impacto
-            x_aux = x_est;
-            while 1
-                x_aux = f_model(x_aux, u);
-                impPtPred = h(x_aux, u);
-                if impPtPred(3) < p_floor
-                    break
-                end
-            end
-            
-            % prever ponto de disparo
-            x_aux = x_est;
-            while 1
-                x_aux = f_model_rev(x_aux, u);
-                shoPtPred = h(x_aux, u);
-                if shoPtPred(3) < p_floor
-                    break
-                end
-            end
-
-            % calcular erro dos pontos de impacto e de disparo
-            impErr(j) = norm(impPtPred - impPt);
-            shoErr(j) = norm(shoPtPred - shoPt);
-        end
+        impErrAvg3 = impErrAvg3 + impErr3; shoErrAvg3 = shoErrAvg3 + shoErr3;
+        state_error3_avg = state_error3_avg + state_error3;
     end
-
-    impErrAvg = impErrAvg + impErr;
-    shoErrAvg = shoErrAvg + shoErr;
 end
+impErrAvg1 = impErrAvg1/numOfSim; shoErrAvg1 = shoErrAvg1/numOfSim;
+state_error1_avg = state_error1_avg/numOfSim
+
+impErrAvg2 = impErrAvg2/numOfSim; shoErrAvg2 = shoErrAvg2/numOfSim;
+state_error2_avg = state_error2_avg/numOfSim
+
+impErrAvg3 = impErrAvg3/numOfSim; shoErrAvg3 = shoErrAvg3/numOfSim;
+state_error3_avg = state_error3_avg/numOfSim
 
 
-impErrAvg = impErrAvg/numOfsim;
-shoErrAvg = shoErrAvg/numOfsim;
-
-% plot das trajetorias
+% plot dos erros
 figure
-plot(impErrAvg, 'LineWidth', 2)
+plot(impErrAvg1, 'LineWidth', 2)
+hold on
+plot(impErrAvg2, 'LineWidth', 2)
+hold on
+plot(impErrAvg3, 'LineWidth', 2)
 title('impacto')
+legend('metodo 1', 'metodo 2', 'metodo 3')
 grid on
 xlabel('amostras'), ylabel('erro (m)')
 ylim([0 1e3])
+% set(gcf, 'Units', 'normalized', 'OuterPosition', [0 0 1 1], 'Color', [1 1 1])
 
 figure
-plot(shoErrAvg, 'LineWidth', 2)
+plot(shoErrAvg1, 'LineWidth', 2)
+hold on
+plot(shoErrAvg2, 'LineWidth', 2)
+hold on
+plot(shoErrAvg3, 'LineWidth', 2)
 title('disparo')
+legend('metodo 1', 'metodo 2', 'metodo 3')
 grid on
 xlabel('amostras'), ylabel('erro (m)')
 ylim([0 1e3])
+% set(gcf, 'Units', 'normalized', 'OuterPosition', [0 0 1 1], 'Color', [1 1 1])

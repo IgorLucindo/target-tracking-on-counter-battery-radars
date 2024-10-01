@@ -1,9 +1,7 @@
 % definir saida real
 function [y_true, impPt, shoPt] = setTrueTrajectory(x_true, T, u, p_floor)
-    % periodo de amostragem pequeno para melhor resolucao de trajetoria
-    T_5ms = 0.005;
-
     % planta
+    T_5ms = 0.005;
     [f, h, ~, ~, f_rev, ~] = getParamsEkf(T_5ms);
     plant = Plant(f, h, x_true);
     plantRev = Plant(f_rev, h, x_true);
@@ -25,6 +23,7 @@ function [y_true, impPt, shoPt] = setTrueTrajectory(x_true, T, u, p_floor)
             rescale = T/T_5ms;
             y_true = y_true(:, rescale:rescale:end);
             impPt = y_true_i;
+
             break;
         end
     end

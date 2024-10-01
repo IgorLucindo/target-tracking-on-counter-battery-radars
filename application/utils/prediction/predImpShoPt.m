@@ -1,7 +1,12 @@
 % prever ponto de impacto e disparo de modelo nao linear
-function [impPtPred, shoPtPred] = predImpShoPt(x, u, p_floor, plant, plantRev, modelType)
-    if modelType == "kf"
-        x = [x; 1e-4];
+function [impPtPred, shoPtPred] = predImpShoPt(x, u, p_floor, plant, plantRev, filter)
+    if filter == "kf"
+        gama = 1e-4;
+        % gama = 0; % gama real inicial de 0
+        % gama = 8.2873e-05; % gama real inicial de 1e-4
+        % gama = 1.6797e-04; % gama real inicial de 2e-4
+        % gama = 3.4314e-04; % gama real inicial de 4e-4
+        x = [x; gama];
     end
 
     % ponto de impacto e disparo

@@ -1,21 +1,9 @@
 % rodar simulacoes dependendo da comparacao escolhida
 function runSimWithComparison(compare, numOfSim, predTime)
-    % definir flags de comparacao e escolher path do arquivo de resultado
-    switch compare
-        case "models"
-            simFlags = dictionary(["P" "T" "Ti" "Rad"], [0 1 0 0]);
-            resultsFilePath = "results\weights_model.mat";
-        otherwise
-            fprintf("comparison unrecognized\n");
-            return;
-    end
-
+    % definir parametros de simulacao a partir da comparacao escolhida
+    [simFlags, resultsFilePath, model, T_ref, numOfT, numOfP] = setSimParams(compare);
 
     % parametros para comparacao
-    numOfP = 4;
-    numOfT = 1;
-    T_ref = 0.05;
-    model = "nonLinear";
     detecThresh = ceil(10/T_ref);
 
     % variaveis do modelo
@@ -40,25 +28,20 @@ function runSimWithComparison(compare, numOfSim, predTime)
     R = 0.1*R;             % R chutado para 10 vezes menor
     % quero testar R obtido por autocovariance least-square
 
-    % periodo de amostragem
+    % definir T_array para comparacoes
     T_array = T_ref * (1:numOfT);
-    T_10ms = 0.01;
 
+    % definir P_array para comparacoes
+    [P_array_kf, P_array_ekf] = setPArray(numOfP);
 
     % definir trajetoria, ponto de impacto e ponto de disparo reais
     x_true = [zeros(1, 3) v0 gama]';
     [y_true, impPt, shoPt] = setTrueTrajectory(x_true, T_ref, u, p_floor);
 
-    % array de diferentes P
-    P_array = zeros(6, 6, numOfP);
-    for i = 1:numOfP
-        P_array(:, :, i) = 10^(10 - 2*i) * eye(6);
-    end
-
 
     % criar weights caso nao exista e definir labels
     if exist(resultsFilePath, 'file') == 0
-        createWeights(resultsFilePath, T_array, T_10ms, P_array, predTime);
+        createWeights(resultsFilePath, T_array, P_array_kf, P_array_ekf, predTime);
     end
 
     % carregar weights
@@ -92,9 +75,7 @@ function runSimWithComparison(compare, numOfSim, predTime)
                 continue
             end
             switch key
-                case 'P'
-                    y_P = getSimulatedTrajectory(y_true, sigma2_n, predTime, T_10ms, detecThresh);
-                case 'Rad'
+                case {"Rad_kf", "Rad_ekf"}
                     [y_Rad, impPt, shoPt, T_rad] = getRadarTrajectoryDynamically(i);
                     T_array = [T_rad];
                 otherwise
@@ -110,33 +91,38 @@ function runSimWithComparison(compare, numOfSim, predTime)
             end
 
             % rodar simulacao
-            isInterp = false;
             switch key
-                case 'P'
+                case "P_kf"
                     [data.impErrP_array{end + 1}, data.shoErrP_array{end + 1}] = ...
-                        runSimP(T_10ms, P_array, y_P, g, u, impPt, shoPt, p_floor, predTime, R);
+                        runMultiSim(P_array_kf, T_array, T_ref, y, impPt, shoPt, predTime, R, model, "kf", false);
 
-                case 'T'
+                case "P_ekf"
+                    [data.impErrPEKF_array{end + 1}, data.shoErrPEKF_array{end + 1}] = ...
+                        runMultiSim(P_array_ekf, T_array, T_ref, y, impPt, shoPt, predTime, R, model, "ekf", false);
+
+                case "T_kf"
                     [data.impErrT_array{end + 1}, data.shoErrT_array{end + 1}] = ...
-                        runMultiSim(T_array, T_ref, y, impPt, shoPt, predTime, R, "kf", isInterp);
+                        runMultiSim(P_array_kf, T_array, T_ref, y, impPt, shoPt, predTime, R, model, "kf", false);
+                    
+                case "T_ekf"
                     [data.impErrTEKF_array{end + 1}, data.shoErrTEKF_array{end + 1}] = ...
-                        runMultiSim(T_array, T_ref, y, impPt, shoPt, predTime, R, "ekf", isInterp);
+                        runMultiSim(P_array_ekf, T_array, T_ref, y, impPt, shoPt, predTime, R, model, "ekf", false);
 
-                case 'Ti'
-                    isInterp = true;
+                case "Ti_kf"
                     [data.impErrTi_array{end + 1}, data.shoErrTi_array{end + 1}] = ...
-                        runMultiSim(T_array, T_ref, y, impPt, shoPt, predTime, R, "kf", isInterp);
-                    [data.impErrTiEKF_array{end + 1}, data.shoErrTiEKF_array{end + 1}] = ...
-                        runMultiSim(T_array, T_ref, y, impPt, shoPt, predTime, R, "ekf", isInterp);
+                        runMultiSim(P_array_kf, T_array, T_ref, y, impPt, shoPt, predTime, R, model, "kf", true);
 
-                case 'Rad'
+                case "Ti_ekf"
+                    [data.impErrTiEKF_array{end + 1}, data.shoErrTiEKF_array{end + 1}] = ...
+                        runMultiSim(P_array_ekf, T_array, T_ref, y, impPt, shoPt, predTime, R, model, "ekf", true);
+
+                case "Rad_kf"
                     [data.impErrRad_array{end + 1}, data.shoErrRad_array{end + 1}] = ...
-                        runMultiSim(T_array, T_ref, y_Rad, impPt, shoPt, predTime, R, "kf", isInterp);
+                        runMultiSim(P_array_kf, T_array, T_ref, y_Rad, impPt, shoPt, predTime, R, model, "kf", false);
+
+                case "Rad_ekf"
                     [data.impErrRadEKF_array{end + 1}, data.shoErrRadEKF_array{end + 1}] = ...
-                        runMultiSim(T_array, T_ref, y_Rad, impPt, shoPt, predTime, R, "ekf", isInterp);
-                    isInterp = true;
-                    [data.impErrRadTiEKF_array{end + 1}, data.shoErrRadTiEKF_array{end + 1}] = ...
-                        runMultiSim(T_array, 0.005, y_Rad, impPt, shoPt, predTime, R, "ekf", isInterp);
+                        runMultiSim(P_array_ekf, T_array, T_ref, y_Rad, impPt, shoPt, predTime, R, model, "ekf", false);
             end
 
             data.('numOfSim' + keys(j)) = numOfPrevSim(j) + i;

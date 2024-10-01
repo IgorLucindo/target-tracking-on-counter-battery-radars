@@ -1,10 +1,10 @@
 % rodar simulacoes com P fixo
-function [impErrT, shoErrT] = runMultiSim(T_array, T_new, y, impPt, shoPt, predTime, R, filter, isInterp)
-    numOfMethods = 3;
+function [impErr, shoErr] = runMultiSim(P_array, T_array, T_new, y, impPt, shoPt, predTime, R, model, filter, isInterp)
+    % variaveis para multiplas simulacoes
     numOfT = length(T_array);
-
-    % metodo
+    numOfP = size(P_array, 3);
     method = [1 2 3];
+    numOfMethods = 3;
 
     % saida medida
     y_cell = cell(numOfT);
@@ -12,13 +12,18 @@ function [impErrT, shoErrT] = runMultiSim(T_array, T_new, y, impPt, shoPt, predT
         y_cell{i} = y(:, i:i:end);
     end
 
-    % iniciar errCell
-    impErrT = cell(numOfMethods, numOfT);
-    shoErrT = cell(numOfMethods, numOfT);
+    % escolhe comparacao de T ou P
+    errLength = max(numOfT, numOfP);
 
+    % iniciar errCell
+    impErr = cell(numOfMethods, errLength);
+    shoErr = cell(numOfMethods, errLength);
+
+    % simulacoes
     for i = 1:numOfMethods
-        for j = 1:numOfT
-            [~, impErrT{i, j}, shoErrT{i, j}] = runSim(T_array(j), T_new, method(i), y_cell{j}, impPt, shoPt, predTime, R, filter, isInterp);
+        for j = 1:errLength
+            [~, impErr{i, j}, shoErr{i, j}] = ...
+                runSim(P_array(:, :, min(numOfP, j)), T_array(min(numOfT, j)), T_new, method(i), y_cell{min(numOfT, j)}, impPt, shoPt, predTime, R, model, filter, isInterp);
         end
     end
 end

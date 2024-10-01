@@ -1,4 +1,4 @@
-function errorPlot(t_cell, errArray, plotTitle, plotLegend, xLim, yLim_max, lines)
+function errorPlot(t_cell, errArray, plotTitle, plotLegend, xLim, yLim, lines)
     figure
     for i = 1:size(errArray, 1)
         subplot(1, size(errArray, 1), i)
@@ -9,7 +9,7 @@ function errorPlot(t_cell, errArray, plotTitle, plotLegend, xLim, yLim_max, line
         end
         title(plotTitle(i))
         xlim(xLim)
-        ylim([0 yLim_max])
+        ylim(yLim)
         xlabel('tempo (s)'), ylabel('erro (m)')
         legend(plotLegend, 'ItemHitFcn', @cb_legend)
         grid on
