@@ -8,9 +8,9 @@ function [y_est, impErr, shoErr] = runSim(P, T, T_new, method, y, impPt, shoPt, 
     rescale = T/T_new;
 
     % gama inicial para filtragem
-    gama = 1.242e-4; % +50% erro, gama real inicial de 1e-4
     % gama = 4.1435e-5; % -50% erro, gama real inicial de 1e-4
-    % gama = 1.657e-4; % +100% erro, gama real inicial de 1e-4
+    % gama = 1.242e-4; % +50% erro, gama real inicial de 1e-4
+    gama = 1.657e-4; % +100% erro, gama real inicial de 1e-4
     % gama = 2.486e-4; % +200% erro, gama real inicial de 1e-4
     % roubando
     % gama = 0; % gama real inicial de 0

@@ -40,16 +40,16 @@ function plotModel()
     for i = 1:errSize(1)
         plotTitle(i) = labelsT.method(i);
     end
-    plotLegend(1) = "Kalman Filter";
-    plotLegend(2) = "Kalman Filter Extendido";
+    plotLegend(1) = "Filtro de Kalman";
+    plotLegend(2) = "Filtro de Kalman Estendido";
     lines = strings(1, errSize(2));
     lim = [0 500];
     errorPlot(t_cell, impErrAvg, plotTitle, plotLegend, predTime, lim, lines);
-    sgtitle("Erro de Impacto - Trajetória Simulada com Arrasto - " + numOfSim + " Simulações - T = " + labelsT.T(1));
+    sgtitle("Erro do Ponto de Impacto - Trajetória Simulada com Arrasto - " + numOfSim + " Simulações - T = " + labelsT.T(1));
     errorPlot(t_cell, shoErrAvg, plotTitle, plotLegend, predTime, lim, lines);
-    sgtitle("Erro de Disparo - Trajetória Simulada com Arrasto - " + numOfSim + " Simulações - T = " + labelsT.T(1));
-    plotTitle(1) = "Erro de Impacto";
-    plotTitle(2) = "Erro de Disparo";
+    sgtitle("Erro do Ponto de Disparo - Trajetória Simulada com Arrasto - " + numOfSim + " Simulações - T = " + labelsT.T(1));
+    plotTitle(1) = "Erro do Ponto de Impacto";
+    plotTitle(2) = "Erro do Ponto de Disparo";
     errorPlot(t_cell(:, 1:2), errMethod1, plotTitle, plotLegend, predTime, lim, lines);
     sgtitle("Trajetória Simulada com Arrasto - " + numOfSim + " Simulações - T = " + labelsT.T(1) + " - " + labelsT.method(1) + " - γ = 1e-4");
 end

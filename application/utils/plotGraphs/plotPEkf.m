@@ -41,7 +41,7 @@ function plotPEkf()
     end
     lines = strings(1, errSize(2));
     errorPlot(t_cell, impErrAvg, plotTitle, plotLegend, predTime, [150 1200], lines);
-    sgtitle("Erro de Impacto - Trajetória Simulada com Arrasto - " + numOfSim + " Simulações - T = " + labelsPKF.T + " - γ_{inicial} = 50% γ_{real}");
+    sgtitle("Erro do Ponto de Impacto - Trajetória Simulada com Arrasto - " + numOfSim + " Simulações - T = " + labelsPKF.T + " - γ_{inicial} = 200% γ_{real}");
     errorPlot(t_cell, shoErrAvg, plotTitle, plotLegend, predTime, [0 200], lines);
-    sgtitle("Erro de Disparo - Trajetória Simulada com Arrasto - " + numOfSim + " Simulações - T = " + labelsPKF.T + " - γ_{inicial} = 50% γ_{real}");
+    sgtitle("Erro do Ponto de Disparo - Trajetória Simulada com Arrasto - " + numOfSim + " Simulações - T = " + labelsPKF.T + " - γ_{inicial} = 200% γ_{real}");
 end

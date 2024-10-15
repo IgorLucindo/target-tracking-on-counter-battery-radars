@@ -41,9 +41,10 @@ function plotInterpKf()
     end
     plotLegend(1) = "Não Interpolado";
     plotLegend(2) = "Interpolado para " + labels.T(1);
+    lim = [0 200];
     lines = ["b" "r--"];
-    errorPlot(t_cell, impErrTAvg, plotTitle, plotLegend, predTime, 200, lines);
-    sgtitle("Erro de Impacto - Trajetória Simulada sem Arrasto - " + numOfSim + " Simulações");
-    errorPlot(t_cell, shoErrTAvg, plotTitle, plotLegend, predTime, 200, lines);
-    sgtitle("Erro de Disparo - Trajetória Simulada sem Arrasto - " + numOfSim + " Simulações");
+    errorPlot(t_cell, impErrTAvg, plotTitle, plotLegend, predTime, lim, lines);
+    sgtitle("Erro do Ponto de Impacto - Trajetória Simulada sem Arrasto - " + numOfSim + " Simulações");
+    errorPlot(t_cell, shoErrTAvg, plotTitle, plotLegend, predTime, lim, lines);
+    sgtitle("Erro do Ponto de Disparo - Trajetória Simulada sem Arrasto - " + numOfSim + " Simulações");
 end

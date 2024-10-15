@@ -18,7 +18,7 @@ comparisons = ["models", "P_kf", "P_ekf", "T_kf", "T_ekf", "interp_kf", "interp_
 
 
 % escolha a comparacao
-compare = comparisons(4);
+compare = comparisons(3);
 
 % variaveis de simulacao
 % numero de simulacoes

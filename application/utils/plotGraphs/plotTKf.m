@@ -39,7 +39,7 @@ function plotTKf()
     lines = strings(1, errSize(2));
     lim = [0 200];
     errorPlot(t_cell, impErrAvg, plotTitle, plotLegend, predTime, lim, lines);
-    sgtitle("Erro de Impacto - Trajetória Simulada sem Arrasto - " + numOfSim + " Simulações");
+    sgtitle("Erro do Ponto de Impacto - Trajetória Simulada sem Arrasto - " + numOfSim + " Simulações");
     errorPlot(t_cell, shoErrAvg, plotTitle, plotLegend, predTime, lim, lines);
-    sgtitle("Erro de Disparo - Trajetória Simulada sem Arrasto - " + numOfSim + " Simulações");
+    sgtitle("Erro do Ponto de Disparo - Trajetória Simulada sem Arrasto - " + numOfSim + " Simulações");
 end

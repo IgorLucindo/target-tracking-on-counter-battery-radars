@@ -8,6 +8,7 @@ function [P_array_kf, P_array_ekf] = setPArray(numOfP)
         P_array_kf(:, :, 1) = 1e8*eye(6);
         P_array_ekf(:, :, 1) = 1e8*eye(7);
         P_array_ekf(7, 7, 1) = 1e-10;
+        % P_array_ekf(7, 7, 1) = 0;
 
         return;
     end
